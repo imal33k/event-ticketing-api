@@ -4,7 +4,7 @@ export class SyncUserDto {
 
   @IsString()
   @IsNotEmpty()
-  fullName!: string;
+  name!: string;
   
   @IsEmail()
   @IsNotEmpty()

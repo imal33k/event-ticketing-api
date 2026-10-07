@@ -12,7 +12,7 @@ constructor(private readonly prisma: PrismaService) {}
     const passwordHash = await bcrypt.hash(dto.password, 10);
     try {
       return await this.prisma.user.create({
-        data: { email: dto.email, name: dto.fullName, passwordHash },
+        data: { email: dto.email, name: dto.name, passwordHash },
         omit: { passwordHash: true },
       });
     } catch (error) {
