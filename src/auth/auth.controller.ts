@@ -7,6 +7,7 @@ import { JwtSecretRequestType } from '@nestjs/jwt';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser, RequestUser } from './decorators/current-user';
 import { Throttle } from '@nestjs/throttler';
+import { LoginAuthDto } from './dto/login-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -19,8 +20,8 @@ export class AuthController {
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 login attempts per minute
-   @Post('login')
-  login(@Body() dto: RegisterAuthDto) {
+  @Post('login')
+  login(@Body() dto: LoginAuthDto) {
     return this.authService.login(dto);
   }
 

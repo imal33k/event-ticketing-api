@@ -40,9 +40,9 @@ export class EventsController {
 
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN',)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  removeForStaff(@Param('id') id: string) {
     return this.eventsService.remove(id);
   }
 }
