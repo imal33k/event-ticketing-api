@@ -1,142 +1,265 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Ticketing API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A RESTful API for managing support tickets, from creation through resolution. It supports user authentication, ticket assignment, status tracking, comments, and filtering.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- User registration and JWT-based authentication
+- Create, read, update, and delete tickets
+- Assign tickets to agents
+- Ticket status workflow (open, in progress, resolved, closed)
+- Priority levels and categories
+- Comments on tickets
+- Filtering, sorting, and pagination
+- Role-based access control (admin, agent, customer)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+Replace this section with your actual stack. Example:
+
+- Node.js and Express
+- PostgreSQL (or MongoDB)
+- JWT for authentication
+- Jest for testing
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18 or later
+- A running database instance
+- npm or yarn
+
+### Installation
 
 ```bash
-$ npm install
+git clone https://github.com/your-username/ticketing-api.git
+cd ticketing-api
+npm install
 ```
 
-## Public event registration
+### Environment Variables
 
-Public registration does not require an account. Fetch the event and its ticket
-types using `GET /events/register/:token`, then submit the attendee's name,
-email, and selected ticket quantities to `POST /events/register/:token`:
+Create a `.env` file in the project root:
+
+```env
+PORT=3000
+DATABASE_URL=postgres://user:password@localhost:5432/ticketing
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=1d
+```
+
+### Run the Server
+
+```bash
+# Development
+npm run dev
+
+# Production
+npm start
+```
+
+The API will be available at `http://localhost:3000/api/v1`.
+
+### Run Tests
+
+```bash
+npm test
+```
+
+## Authentication
+
+Protected endpoints require a Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer <your_token>
+```
+
+## API Endpoints
+
+### Auth
+
+| Method | Endpoint          | Description                | Access |
+|--------|-------------------|----------------------------|--------|
+| POST   | `/auth/register`  | Register a new user        | Public |
+| POST   | `/auth/login`     | Log in and receive a token | Public |
+| GET    | `/auth/me`        | Get current user profile   | Auth   |
+
+### Tickets
+
+| Method | Endpoint                 | Description                | Access         |
+|--------|--------------------------|----------------------------|----------------|
+| POST   | `/tickets`               | Create a ticket            | Auth           |
+| GET    | `/tickets`               | List tickets (filterable)  | Auth           |
+| GET    | `/tickets/:id`           | Get a ticket by ID         | Auth           |
+| PATCH  | `/tickets/:id`           | Update a ticket            | Owner/Agent    |
+| DELETE | `/tickets/:id`           | Delete a ticket            | Admin          |
+| PATCH  | `/tickets/:id/assign`    | Assign a ticket to an agent| Admin/Agent    |
+| PATCH  | `/tickets/:id/status`    | Change ticket status       | Agent/Admin    |
+
+### Comments
+
+| Method | Endpoint                          | Description          | Access |
+|--------|-----------------------------------|----------------------|--------|
+| POST   | `/tickets/:id/comments`           | Add a comment        | Auth   |
+| GET    | `/tickets/:id/comments`           | List comments        | Auth   |
+| DELETE | `/tickets/:id/comments/:commentId`| Delete a comment     | Admin  |
+
+## Request and Response Examples
+
+### Register
+
+**POST** `/auth/register`
 
 ```json
 {
   "name": "Jane Doe",
-  "email": "jane.doe@example.com",
-  "items": [{ "ticketTypeId": "ticket-type-uuid", "quantity": 2 }]
+  "email": "jane@example.com",
+  "password": "StrongPassword123"
 }
 ```
 
-The response contains an `orderId` and the server-calculated total. Initialize
-checkout with `POST /payments/public/:orderId/initialize` and redirect the
-attendee to the returned Paystack `authorizationUrl`. After Paystack confirms
-the payment through `POST /payments/webhook`, the API emails a PDF containing
-one QR ticket per purchased ticket. The frontend can poll
-`GET /payments/public/:orderId` to check payment and email-delivery status.
-Configure Paystack's webhook URL and the existing `PAYSTACK_SECRET_KEY` and
-`RESEND_API_KEY` environment variables.
+### Login
 
-Apply schema migrations with `npx prisma migrate deploy` before starting the
-API. Existing databases that predate the migration history must first be
-verified against the baseline migration and then baselined with
-`npx prisma migrate resolve --applied 20261008140000_baseline`.
+**POST** `/auth/login`
 
-## Compile and run the project
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```json
+{
+  "email": "jane@example.com",
+  "password": "StrongPassword123"
+}
 ```
 
-## Run tests
+**Response**
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6...",
+  "user": {
+    "id": "u_123",
+    "name": "Jane Doe",
+    "role": "customer"
+  }
+}
 ```
 
-## Deployment
+### Create a Ticket
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+**POST** `/tickets`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```json
+{
+  "title": "Unable to reset password",
+  "description": "The reset link in my email returns a 404 error.",
+  "priority": "high",
+  "category": "account"
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+**Response** `201 Created`
 
-## Observability
+```json
+{
+  "id": "t_456",
+  "title": "Unable to reset password",
+  "description": "The reset link in my email returns a 404 error.",
+  "priority": "high",
+  "category": "account",
+  "status": "open",
+  "createdBy": "u_123",
+  "assignedTo": null,
+  "createdAt": "2026-10-08T10:30:00Z"
+}
+```
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+### Update Ticket Status
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+**PATCH** `/tickets/t_456/status`
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+```json
+{
+  "status": "in_progress"
+}
+```
 
-## Resources
+## Query Parameters
 
-Check out a few resources that may come in handy when working with NestJS:
+`GET /tickets` supports the following:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+| Parameter  | Description                                   | Example                  |
+|------------|-----------------------------------------------|--------------------------|
+| `status`   | Filter by status                              | `?status=open`           |
+| `priority` | Filter by priority                            | `?priority=high`         |
+| `category` | Filter by category                            | `?category=billing`      |
+| `assignee` | Filter by assigned agent ID                   | `?assignee=u_789`        |
+| `search`   | Search title and description                  | `?search=password`       |
+| `sort`     | Sort field, prefix with `-` for descending    | `?sort=-createdAt`       |
+| `page`     | Page number (default 1)                       | `?page=2`                |
+| `limit`    | Items per page (default 20, max 100)          | `?limit=50`              |
 
-## Support
+## Ticket Fields
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+| Field         | Type   | Values                                        |
+|---------------|--------|-----------------------------------------------|
+| `status`      | string | `open`, `in_progress`, `resolved`, `closed`   |
+| `priority`    | string | `low`, `medium`, `high`, `urgent`             |
+| `category`    | string | e.g. `billing`, `technical`, `account`, `other` |
 
-## Stay in touch
+## Error Handling
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Errors follow a consistent format:
+
+```json
+{
+  "error": {
+    "code": 400,
+    "message": "Validation failed",
+    "details": ["title is required"]
+  }
+}
+```
+
+| Status Code | Meaning                              |
+|-------------|--------------------------------------|
+| 200         | Success                              |
+| 201         | Resource created                     |
+| 400         | Bad request or validation error      |
+| 401         | Missing or invalid authentication    |
+| 403         | Insufficient permissions             |
+| 404         | Resource not found                   |
+| 429         | Too many requests                    |
+| 500         | Internal server error                |
+
+## Project Structure
+
+```
+ticketing-api/
+├── src/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   └── app.js
+├── tests/
+├── .env.example
+├── package.json
+└── README.md
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m "Add my feature"`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Open a pull request
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License.
+
+---
+
+If you tell me your actual stack (language, framework, database) and your real endpoints, I can tailor this README to match your project exactly.
