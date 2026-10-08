@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../generated/prisma/client';
@@ -6,7 +10,7 @@ import { SyncUserDto } from './dto/sync-user.dto';
 
 @Injectable()
 export class UsersService {
-constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: SyncUserDto) {
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -25,20 +29,20 @@ constructor(private readonly prisma: PrismaService) {}
       throw error;
     }
   }
-  async findOne(id:string) {
+  async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
       omit: { passwordHash: true },
     });
-    if (!user) 
-    throw new NotFoundException('User not found');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 
-  async findByEmail(email: string) {
+  async findByEmailWithHash(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
     });
   }
-    }
-  
+}

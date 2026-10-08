@@ -31,6 +31,34 @@
 $ npm install
 ```
 
+## Public event registration
+
+Public registration does not require an account. Fetch the event and its ticket
+types using `GET /events/register/:token`, then submit the attendee's name,
+email, and selected ticket quantities to `POST /events/register/:token`:
+
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "items": [{ "ticketTypeId": "ticket-type-uuid", "quantity": 2 }]
+}
+```
+
+The response contains an `orderId` and the server-calculated total. Initialize
+checkout with `POST /payments/public/:orderId/initialize` and redirect the
+attendee to the returned Paystack `authorizationUrl`. After Paystack confirms
+the payment through `POST /payments/webhook`, the API emails a PDF containing
+one QR ticket per purchased ticket. The frontend can poll
+`GET /payments/public/:orderId` to check payment and email-delivery status.
+Configure Paystack's webhook URL and the existing `PAYSTACK_SECRET_KEY` and
+`RESEND_API_KEY` environment variables.
+
+Apply schema migrations with `npx prisma migrate deploy` before starting the
+API. Existing databases that predate the migration history must first be
+verified against the baseline migration and then baselined with
+`npx prisma migrate resolve --applied 20261008140000_baseline`.
+
 ## Compile and run the project
 
 ```bash

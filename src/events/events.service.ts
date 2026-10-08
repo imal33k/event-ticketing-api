@@ -1,29 +1,41 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import { PrismaService } from '../prisma/prisma.service';
 import { ListEventsDto } from './dto/list-events.dto';
 
 @Injectable()
 export class EventsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // ---------------------------------------------------------------------------
+  // Admin: event CRUD
+  // ---------------------------------------------------------------------------
+
   async create(dto: CreateEventDto) {
     const { title, description, venue, startAt, endAt } = dto;
+    this.assertValidDates(startAt, endAt);
 
     return this.prisma.event.create({
       data: {
         title,
         description,
         venue,
-        startsAt: startAt,
-        endsAt: endAt,
+        startsAt: new Date(startAt),
+        endsAt: new Date(endAt),
+        publicRegistrationToken: randomUUID(), // powers the public link
       },
     });
   }
 
   async findAll({ page, limit }: ListEventsDto) {
-    const where = { endsAt: { gte: new Date().toISOString() } }; // hide past events
+    const where = { endsAt: { gte: new Date() } };
     const [items, total] = await this.prisma.$transaction([
       this.prisma.event.findMany({
         where,
@@ -51,11 +63,21 @@ export class EventsService {
 
   async update(id: string, dto: UpdateEventDto) {
     const existing = await this.findOne(id);
+    const { startAt, endAt, ...rest } = dto;
+
     this.assertValidDates(
-      dto.startAt ?? existing.startsAt.toString(),
-      dto.endsAt ?? existing.endsAt.toString(),
+      startAt ?? existing.startsAt.toISOString(),
+      endAt ?? existing.endsAt.toISOString(),
     );
-    return this.prisma.event.update({ where: { id }, data: dto });
+
+    return this.prisma.event.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(startAt && { startsAt: new Date(startAt) }),
+        ...(endAt && { endsAt: new Date(endAt) }),
+      },
+    });
   }
 
   async remove(id: string) {
@@ -74,9 +96,49 @@ export class EventsService {
     return { deleted: true };
   }
 
-  private assertValidDates(startsAt: string, endsAt: string) {
-    if (new Date(endsAt) <= new Date(startsAt)) {
-      throw new BadRequestException('endsAt must be after startsAt');
+  // ---------------------------------------------------------------------------
+  // Public registration (via public link)
+  // ---------------------------------------------------------------------------
+
+  async getPublicEvent(token: string) {
+    const event = await this.findByPublicToken(token);
+
+    return {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      venue: event.venue,
+      startsAt: event.startsAt,
+      endsAt: event.endsAt,
+      ticketTypes: event.ticketTypes.map((ticketType) => ({
+        id: ticketType.id,
+        name: ticketType.name,
+        priceKobo: ticketType.priceKobo,
+        available: Math.max(0, ticketType.capacity - ticketType.sold),
+      })),
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  private async findByPublicToken(token: string) {
+    const event = await this.prisma.event.findUnique({
+      where: { publicRegistrationToken: token },
+      include: {
+        ticketTypes: {
+          orderBy: { priceKobo: 'asc' },
+        },
+      },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+    return event;
+  }
+
+  private assertValidDates(startAt: string, endAt: string) {
+    if (new Date(endAt) <= new Date(startAt)) {
+      throw new BadRequestException('endAt must be after startAt');
     }
   }
 }

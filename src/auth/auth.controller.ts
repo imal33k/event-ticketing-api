@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -11,7 +20,10 @@ import { LoginAuthDto } from './dto/login-auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly users: UsersService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly users: UsersService,
+  ) {}
 
   @Throttle({ default: { limit: 3, ttl: 60_000 } }) // 3 registration attempts per minute
   @Post('register')
@@ -27,7 +39,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@CurrentUser() user: { id: string; }) {
+  getMe(@CurrentUser() user: { id: string }) {
     return this.users.findOne(user.id);
   }
 }

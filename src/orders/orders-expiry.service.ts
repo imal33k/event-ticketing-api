@@ -44,16 +44,17 @@ export class OrdersExpiryService {
   }
 
   async expireOrder(orderId: string): Promise<boolean> {
-  return this.prisma.$transaction(async (tx) => {
-    // Claim the order. If a webhook just marked it PAID, this matches nothing.
-    const { count } = await tx.order.updateMany({
-      where: { id: orderId, status: 'PENDING' },
-      data: { status: 'EXPIRED' },
-    });
-    if (count === 0) return false;
+    return this.prisma.$transaction(async (tx) => {
+      // Claim the order. If a webhook just marked it PAID, this matches nothing.
+      const { count } = await tx.order.updateMany({
+        where: { id: orderId, status: 'PENDING' },
+        data: { status: 'EXPIRED' },
+      });
+      if (count === 0) return false;
 
-    await releaseStock(tx, orderId); // must run before the tickets are deleted
-    await tx.ticket.deleteMany({ where: { orderId } });
-    return true;
-  });
-};}
+      await releaseStock(tx, orderId); // must run before the tickets are deleted
+      await tx.ticket.deleteMany({ where: { orderId } });
+      return true;
+    });
+  }
+}

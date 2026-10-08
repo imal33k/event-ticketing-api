@@ -1,11 +1,16 @@
-import { IsString, IsEmail, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 
 export class SyncUserDto {
-
   @IsString()
   @IsNotEmpty()
   name!: string;
-  
+
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -13,5 +18,4 @@ export class SyncUserDto {
   @IsString()
   @IsNotEmpty()
   password: string;
-
 }

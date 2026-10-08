@@ -8,13 +8,11 @@ datasource db {
   provider = "postgresql"
 }
 
-
 enum Role {
   USER
   ADMIN
   STAFF
 }
-
 
 enum OrderStatus {
   PENDING
@@ -26,25 +24,25 @@ enum OrderStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
   passwordHash String
-  role      Role     @default(USER)
-  orders    Order[]
-  createdAt DateTime @default(now())
+  role         Role     @default(USER)
+  orders       Order[]
+  createdAt    DateTime @default(now())
 }
 
 model Event {
-  id          String       @id @default(uuid())
-  title       String
-  description String?
-  venue       String
-  startsAt    DateTime
-  endsAt      DateTime
-  publicRegistrationToken String     @unique @default(uuid())
-  ticketTypes TicketType[]
-  createdAt   DateTime     @default(now())
+  id                      String       @id @default(uuid())
+  title                   String
+  description             String?
+  venue                   String
+  startsAt                DateTime
+  endsAt                  DateTime
+  publicRegistrationToken String       @unique @default(uuid())
+  ticketTypes             TicketType[]
+  createdAt               DateTime     @default(now())
 
   @@index([publicRegistrationToken])
   @@index([startsAt, endsAt])
@@ -55,8 +53,8 @@ model TicketType {
   id        String   @id @default(uuid())
   eventId   String
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  name      String   // e.g. "VIP", "General"
-  priceKobo Int      // store money as integer minor units
+  name      String // e.g. "VIP", "General"
+  priceKobo Int // store money as integer minor units
   capacity  Int
   sold      Int      @default(0)
   tickets   Ticket[]
@@ -65,19 +63,23 @@ model TicketType {
 }
 
 model Order {
-  id        String      @id @default(uuid())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  status    OrderStatus @default(PENDING)
-  total     Int
+  id               String      @id @default(uuid())
+  userId           String?
+  user             User?       @relation(fields: [userId], references: [id])
+  guestName        String?
+  guestEmail       String?
+  emailSentAt      DateTime?
+  status           OrderStatus @default(PENDING)
+  total            Int
   expiresAt        DateTime    @default(now())
   paymentReference String?     @unique
   paidAt           DateTime?
-  tickets   Ticket[]
-  createdAt DateTime    @default(now())
-  refundedAt DateTime?
+  tickets          Ticket[]
+  createdAt        DateTime    @default(now())
+  refundedAt       DateTime?
+
   @@index([userId])
-  @@index([status,expiresAt])
+  @@index([status, expiresAt])
 }
 
 model Ticket {

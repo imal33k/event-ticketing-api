@@ -14,7 +14,9 @@ export class OrderItemDto {
   @IsUUID()
   ticketTypeId: string;
 
-  @IsInt() @Min(1) @Max(10)
+  @IsInt()
+  @Min(1)
+  @Max(10)
   quantity: number;
 }
 

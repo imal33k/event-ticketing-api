@@ -1,4 +1,11 @@
-import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { SyncUserDto } from './dto/sync-user.dto';
 
@@ -12,7 +19,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id')id: string) {
+  async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 }

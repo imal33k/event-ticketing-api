@@ -6,7 +6,6 @@ import { CreateTicketTypeDto } from './dto/create-ticket-type.dto';
 export class TicketTypesService {
   constructor(private prisma: PrismaService) {}
 
-  
   private async assertEventExists(eventId: string) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
@@ -29,5 +28,4 @@ export class TicketTypesService {
       orderBy: { priceKobo: 'asc' },
     });
   }
-
 }

@@ -7,25 +7,36 @@ import { LoginAuthDto } from './dto/login-auth.dto';
 
 @Injectable()
 export class AuthService {
-  login(dto: RegisterAuthDto) {
-    throw new Error('Method not implemented.');
-  }
-constructor(private users: UsersService, private jwtService: JwtService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private jwtService: JwtService,
+  ) {}
 
   async create(dto: RegisterAuthDto) {
-    const user = await this.users.create(dto);
-    return { user, accessToken: await this.jwtService.signAsync({ id: user.id, role: user.role }) };
+    const user = await this.usersService.create(dto);
+    return {
+      user,
+      accessToken: await this.jwtService.signAsync({
+        id: user.id,
+        role: user.role,
+      }),
+    };
   }
-  
-  async Login(dto:LoginAuthDto) {
-    const user = await this.users.findByEmail(dto.email);
-    const valid = user && (await bcrypt.compare(dto.password, user.passwordHash));
+
+  async login(dto: LoginAuthDto) {
+    const user = await this.usersService.findByEmailWithHash(dto.email);
+    const valid =
+      user && (await bcrypt.compare(dto.password, user.passwordHash));
     if (!user || !valid) {
       throw new UnauthorizedException('Invalid email and password');
     }
-    return { user, accessToken: await this.jwtService.signAsync({ id: user.id, role: user.role }) };
-  }
-  private signAsync(password: string, sub: string, role: string) {
-    return this.jwtService.signAsync({ password, sub, role });
+
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      role: user.role,
+    });
+
+    const { passwordHash, ...safeUser } = user;
+    return { user: safeUser, accessToken };
   }
 }
